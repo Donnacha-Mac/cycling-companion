@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Cycling Companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #2a2a3a;
+      --accent: #00e5ff;
+      --accent2: #ff4d6d;
+      --text: #f0f0f5;
+      --muted: #7070a0;
+      --green: #00ff99;
+      --card-bg: #16161f;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    #status-badge {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--bg);
+      transition: all 0.3s;
+    }
+
+    #status-badge.connected {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    #status-badge.recording {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      animation: pulse-border 1.4s infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── CONNECT SCREEN ── */
+    #connect-screen {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-top: 16px;
+    }
+
+    .connect-intro {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .connect-intro strong {
+      color: var(--text);
+    }
+
+    .sensor-row {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .sensor-info { flex: 1; }
+
+    .sensor-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .sensor-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .sensor-status {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .sensor-status.ok { color: var(--green); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      width: 100%;
+    }
+
+    .btn-danger {
+      background: var(--accent2);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      width: 100%;
+    }
+
+    .btn-lap {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      width: 100%;
+      font-size: 1rem;
+      padding: 18px;
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── WORKOUT SCREEN ── */
+    #workout-screen { display: none; flex-direction: column; gap: 16px; }
+
+    /* Timer */
+    .timer-block {
+      text-align: center;
+      padding: 10px 0 4px;
+    }
+
+    .timer-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #elapsed-time {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+    }
+
+    /* Metric cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .metric-card.power::before { background: var(--accent); }
+    .metric-card.hr::before { background: var(--accent2); }
+
+    .metric-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .metric-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .metric-card.power .metric-value { color: var(--accent); }
+    .metric-card.hr .metric-value { color: var(--accent2); }
+
+    .metric-unit {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* Invisible live region for VoiceOver — only announces on nav, not auto */
+    .sr-live {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+    }
+
+    /* ── LAP SECTION ── */
+    .lap-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #laps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .lap-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      animation: slide-in 0.2s ease;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .lap-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .lap-stats {
+      display: flex;
+      gap: 16px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .lap-stat {
+      text-align: right;
+    }
+
+    .lap-stat-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .lap-stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .lap-stat-val.pwr { color: var(--accent); }
+    .lap-stat-val.hr { color: var(--accent2); }
+
+    /* No laps placeholder */
+    #no-laps {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px;
+    }
+
+    /* ── CONTROLS ── */
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ── SENSOR CONNECT BUTTONS (small) ── */
+    .btn-sm {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-sm.ok {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    /* Divider label */
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: -4px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 aria-label="Cycling Companion App">Cycling Companion</h1>
+    <span id="status-badge" role="status" aria-live="polite">Disconnected</span>
+  </header>
+
+  <main id="main-content">
+
+    <!-- ═══════════════════════════════════════════
+         CONNECT SCREEN
+    ════════════════════════════════════════════ -->
+    <section id="connect-screen" aria-label="Sensor setup">
+
+      <p class="connect-intro">
+        Connect your <strong>power meter</strong> and <strong>heart rate monitor</strong> via Bluetooth, then start your session.
+      </p>
+
+      <!-- Power meter -->
+      <div class="sensor-row" role="group" aria-labelledby="pm-label">
+        <div class="sensor-info">
+          <div class="sensor-label" id="pm-label">Power Meter</div>
+          <div class="sensor-sub">Cycling Power Service (BLE)</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <span class="sensor-status" id="pm-status" aria-live="polite">Not connected</span>
+          <button class="btn-sm" id="btn-connect-pm"
+            aria-label="Connect power meter via Bluetooth"
+            onclick="connectSensor('power')">
+            Connect
+          </button>
+        </div>
+      </div>
+
+      <!-- Heart rate -->
+      <div class="sensor-row" role="group" aria-labelledby="hr-label">
+        <div class="sensor-info">
+          <div class="sensor-label" id="hr-label">Heart Rate Monitor</div>
+          <div class="sensor-sub">Heart Rate Service (BLE)</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <span class="sensor-status" id="hr-status" aria-live="polite">Not connected</span>
+          <button class="btn-sm" id="btn-connect-hr"
+            aria-label="Connect heart rate monitor via Bluetooth"
+            onclick="connectSensor('hr')">
+            Connect
+          </button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-start"
+        aria-label="Start workout session"
+        onclick="startWorkout()" disabled>
+        Start Session
+      </button>
+
+      <button class="btn btn-outline" id="btn-start-no-sensor"
+        aria-label="Start session without sensors, for testing only"
+        onclick="startDemo()">
+        Start in Demo Mode
+      </button>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         WORKOUT SCREEN
+    ════════════════════════════════════════════ -->
+    <section id="workout-screen" aria-label="Live workout data">
+
+      <!-- Timer -->
+      <div class="timer-block" role="group" aria-label="Session timer">
+        <div class="timer-label">Session Time</div>
+        <div id="elapsed-time"
+          aria-label="Elapsed time"
+          aria-live="off">
+          00:00:00
+        </div>
+      </div>
+
+      <!-- Live metric cards -->
+      <div class="metrics-grid" role="group" aria-label="Current averages">
+
+        <div class="metric-card power"
+          role="region"
+          aria-label="Three second average power">
+          <div class="metric-label">3s Avg Power</div>
+          <div class="metric-value"
+            id="display-power"
+            tabindex="0"
+            aria-label="Three second average power: 0 watts"
+            aria-live="off">
+            0
+          </div>
+          <div class="metric-unit">watts</div>
+        </div>
+
+        <div class="metric-card hr"
+          role="region"
+          aria-label="Three second average heart rate">
+          <div class="metric-label">3s Avg HR</div>
+          <div class="metric-value"
+            id="display-hr"
+            tabindex="0"
+            aria-label="Three second average heart rate: 0 beats per minute"
+            aria-live="off">
+            0
+          </div>
+          <div class="metric-unit">bpm</div>
+        </div>
+
+      </div>
+
+      <!-- Segment average cards -->
+      <div class="metrics-grid" role="group" aria-label="Current segment averages">
+
+        <div class="metric-card power"
+          role="region"
+          aria-label="Segment average power">
+          <div class="metric-label">Seg Avg Power</div>
+          <div class="metric-value"
+            id="display-seg-power"
+            tabindex="0"
+            aria-label="Segment average power: 0 watts"
+            aria-live="off">
+            0
+          </div>
+          <div class="metric-unit">watts</div>
+        </div>
+
+        <div class="metric-card hr"
+          role="region"
+          aria-label="Segment average heart rate">
+          <div class="metric-label">Seg Avg HR</div>
+          <div class="metric-value"
+            id="display-seg-hr"
+            tabindex="0"
+            aria-label="Segment average heart rate: 0 beats per minute"
+            aria-live="off">
+            0
+          </div>
+          <div class="metric-unit">bpm</div>
+        </div>
+
+      </div>
+
+      <!-- Lap button -->
+      <button class="btn btn-lap" id="btn-lap"
+        aria-label="Record lap and save current segment averages"
+        onclick="recordLap()">
+        ⬤  Lap
+      </button>
+
+      <!-- Laps list -->
+      <div class="lap-section">
+        <div class="section-label" aria-hidden="true">Lap History</div>
+        <div id="laps-container" role="list" aria-label="Lap history" aria-live="polite">
+          <div id="no-laps" role="listitem">No laps recorded yet</div>
+        </div>
+      </div>
+
+      <!-- End session controls -->
+      <div class="controls-row">
+        <button class="btn btn-outline" id="btn-end"
+          aria-label="End workout session and return to setup"
+          onclick="endWorkout()" style="font-size:0.8rem; padding:14px 10px;">
+          End Session
+        </button>
+        <button class="btn btn-danger" id="btn-discard"
+          aria-label="Discard session and clear all data"
+          onclick="discardWorkout()" style="font-size:0.8rem; padding:14px 10px;">
+          Discard
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Screen-reader only live region: speaks lap announcements politely -->
+    <div class="sr-live" aria-live="polite" aria-atomic="true" id="sr-announce"></div>
+
+  </main>
+
+  <footer aria-label="App info">
+    Open in Bluefy on iOS &nbsp;·&nbsp; Bluetooth BLE required
+  </footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+const state = {
+  powerDevice: null,
+  hrDevice: null,
+  powerConnected: false,
+  hrConnected: false,
+  isRecording: false,
+  isDemo: false,
+
+  // Rolling windows (3 seconds at ~1 sample/sec = 3 samples)
+  powerWindow: [],
+  hrWindow: [],
+  WINDOW_SIZE: 3,
+
+  // Lap tracking
+  laps: [],
+  lapPowerSamples: [],
+  lapHrSamples: [],
+  lapCount: 0,
+
+  // Timer
+  startTime: null,
+  lapStartTime: null,
+  timerInterval: null,
+  demoInterval: null,
+};
+
+/* ═══════════════════════════════════════════════════════
+   BLUETOOTH — CONNECT SENSORS
+═══════════════════════════════════════════════════════ */
+async function connectSensor(type) {
+  if (!navigator.bluetooth) {
+    announce('Bluetooth is not available in this browser. Please open this page in Bluefy.');
+    return;
+  }
+
+  const isHR = type === 'hr';
+  const serviceUUID  = isHR ? 'heart_rate' : 'cycling_power';
+  const charUUID     = isHR ? 'heart_rate_measurement' : 'cycling_power_measurement';
+  const btnEl        = document.getElementById(isHR ? 'btn-connect-hr' : 'btn-connect-pm');
+  const statusEl     = document.getElementById(isHR ? 'hr-status' : 'pm-status');
+
+  btnEl.textContent = 'Scanning…';
+  btnEl.disabled = true;
+
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [serviceUUID] }]
+    });
+
+    statusEl.textContent = 'Connecting…';
+
+    const server  = await device.gatt.connect();
+    const service = await server.getPrimaryService(serviceUUID);
+    const char    = await service.getCharacteristic(charUUID);
+
+    await char.startNotifications();
+
+    char.addEventListener('characteristicvaluechanged', (e) => {
+      const val = isHR
+        ? parseHeartRate(e.target.value)
+        : parsePower(e.target.value);
+      if (val !== null) pushSample(isHR ? 'hr' : 'power', val);
+    });
+
+    device.addEventListener('gattserverdisconnected', () => {
+      statusEl.textContent = 'Disconnected';
+      statusEl.classList.remove('ok');
+      btnEl.textContent = 'Reconnect';
+      btnEl.disabled = false;
+      if (isHR) state.hrConnected = false;
+      else state.powerConnected = false;
+      updateStartButton();
+      announce((isHR ? 'Heart rate monitor' : 'Power meter') + ' disconnected.');
+    });
+
+    if (isHR) { state.hrDevice = device; state.hrConnected = true; }
+    else       { state.powerDevice = device; state.powerConnected = true; }
+
+    statusEl.textContent = 'Connected ✓';
+    statusEl.classList.add('ok');
+    btnEl.textContent = 'Connected';
+    btnEl.classList.add('ok');
+    announce((isHR ? 'Heart rate monitor' : 'Power meter') + ' connected successfully.');
+    updateStartButton();
+
+  } catch (err) {
+    statusEl.textContent = 'Failed';
+    btnEl.textContent = 'Retry';
+    btnEl.disabled = false;
+    if (err.name !== 'NotFoundError') {
+      announce('Connection failed: ' + err.message);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   BLUETOOTH DATA PARSERS
+═══════════════════════════════════════════════════════ */
+function parseHeartRate(data) {
+  const flags = data.getUint8(0);
+  const is16bit = flags & 0x01;
+  return is16bit ? data.getUint16(1, true) : data.getUint8(1);
+}
+
+function parsePower(data) {
+  // Cycling Power Measurement: instantaneous power at bytes 2–3 (sint16, little-endian)
+  if (data.byteLength < 4) return null;
+  return data.getInt16(2, true);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SAMPLE MANAGEMENT
+═══════════════════════════════════════════════════════ */
+function pushSample(type, value) {
+  if (!state.isRecording) return;
+
+  if (type === 'power') {
+    state.powerWindow.push(value);
+    if (state.powerWindow.length > state.WINDOW_SIZE)
+      state.powerWindow.shift();
+    state.lapPowerSamples.push(value);
+    updateMetricDisplay('power', avg(state.powerWindow));
+    updateSegDisplay('power', avg(state.lapPowerSamples));
+
+  } else {
+    state.hrWindow.push(value);
+    if (state.hrWindow.length > state.WINDOW_SIZE)
+      state.hrWindow.shift();
+    state.lapHrSamples.push(value);
+    updateMetricDisplay('hr', avg(state.hrWindow));
+    updateSegDisplay('hr', avg(state.lapHrSamples));
+  }
+}
+
+function avg(arr) {
+  if (!arr.length) return 0;
+  return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+}
+
+/* ═══════════════════════════════════════════════════════
+   DISPLAY — update values WITHOUT triggering VoiceOver
+   (aria-live is "off" on the value elements; VoiceOver
+    only reads them when the user navigates to them)
+═══════════════════════════════════════════════════════ */
+function updateMetricDisplay(type, value) {
+  if (type === 'power') {
+    const el = document.getElementById('display-power');
+    el.textContent = value;
+    el.setAttribute('aria-label', `Three second average power: ${value} watts`);
+  } else {
+    const el = document.getElementById('display-hr');
+    el.textContent = value;
+    el.setAttribute('aria-label', `Three second average heart rate: ${value} beats per minute`);
+  }
+}
+
+function updateSegDisplay(type, value) {
+  if (type === 'power') {
+    const el = document.getElementById('display-seg-power');
+    el.textContent = value;
+    el.setAttribute('aria-label', `Segment average power: ${value} watts`);
+  } else {
+    const el = document.getElementById('display-seg-hr');
+    el.textContent = value;
+    el.setAttribute('aria-label', `Segment average heart rate: ${value} beats per minute`);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SESSION CONTROL
+═══════════════════════════════════════════════════════ */
+function updateStartButton() {
+  const btn = document.getElementById('btn-start');
+  btn.disabled = !(state.powerConnected || state.hrConnected);
+}
+
+function startWorkout() {
+  state.isRecording = true;
+  state.isDemo = false;
+  state.startTime = Date.now();
+  state.lapStartTime = Date.now();
+  state.lapCount = 0;
+  state.laps = [];
+  state.lapPowerSamples = [];
+  state.lapHrSamples = [];
+  state.powerWindow = [];
+  state.hrWindow = [];
+
+  showScreen('workout');
+  startTimer();
+  updateStatus('Recording', 'recording');
+  announce('Session started. Three second rolling averages are now updating. Use the Lap button to record segment data.');
+}
+
+function startDemo() {
+  state.isRecording = true;
+  state.isDemo = true;
+  state.startTime = Date.now();
+  state.lapStartTime = Date.now();
+  state.lapCount = 0;
+  state.laps = [];
+  state.lapPowerSamples = [];
+  state.lapHrSamples = [];
+  state.powerWindow = [];
+  state.hrWindow = [];
+
+  showScreen('workout');
+  startTimer();
+  updateStatus('Demo', 'recording');
+  announce('Demo mode started with simulated power and heart rate data.');
+
+  // Simulate sensor data
+  state.demoInterval = setInterval(() => {
+    const power = 180 + Math.round((Math.random() - 0.5) * 40);
+    const hr    = 148 + Math.round((Math.random() - 0.5) * 14);
+    pushSample('power', power);
+    pushSample('hr', hr);
+  }, 1000);
+}
+
+function startTimer() {
+  state.timerInterval = setInterval(() => {
+    const elapsed = Date.now() - state.startTime;
+    const h = Math.floor(elapsed / 3600000);
+    const m = Math.floor((elapsed % 3600000) / 60000);
+    const s = Math.floor((elapsed % 60000) / 1000);
+    const str = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    document.getElementById('elapsed-time').textContent = str;
+    // No aria-live update — VoiceOver reads this only when user navigates to it
+  }, 1000);
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function endWorkout() {
+  stopRecording();
+  showScreen('connect');
+  updateStatus('Disconnected', '');
+  announce('Session ended.');
+}
+
+function discardWorkout() {
+  if (!confirm('Discard this session and clear all lap data?')) return;
+  stopRecording();
+  clearLapsUI();
+  showScreen('connect');
+  updateStatus('Disconnected', '');
+  announce('Session discarded.');
+}
+
+function stopRecording() {
+  state.isRecording = false;
+  clearInterval(state.timerInterval);
+  clearInterval(state.demoInterval);
+  state.timerInterval = null;
+  state.demoInterval = null;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LAP RECORDING
+═══════════════════════════════════════════════════════ */
+function recordLap() {
+  const lapPwr = avg(state.lapPowerSamples);
+  const lapHR  = avg(state.lapHrSamples);
+  const now = Date.now();
+  const duration = now - state.lapStartTime;
+
+  state.lapCount++;
+  const lapNum = state.lapCount;
+
+  const lapData = {
+    num: lapNum,
+    power: lapPwr,
+    hr: lapHR,
+    duration: duration,
+  };
+  state.laps.push(lapData);
+
+  // Reset lap accumulators and start time for next segment
+  state.lapPowerSamples = [];
+  state.lapHrSamples = [];
+  state.lapStartTime = now;
+
+  // Reset segment average displays to zero for the new segment
+  updateSegDisplay('power', 0);
+  updateSegDisplay('hr', 0);
+
+  renderLap(lapData);
+
+  // Build a readable duration string for the announcement
+  const h = Math.floor(duration / 3600000);
+  const m = Math.floor((duration % 3600000) / 60000);
+  const s = Math.floor((duration % 60000) / 1000);
+  const durationStr = h > 0
+    ? `${h} hour${h>1?'s':''}, ${m} minute${m!==1?'s':''}, ${s} second${s!==1?'s':''}`
+    : m > 0
+      ? `${m} minute${m!==1?'s':''} and ${s} second${s!==1?'s':''}`
+      : `${s} second${s!==1?'s':''}`;
+
+  // Polite announcement — VoiceOver reads this after current speech finishes
+  announce(
+    `Lap ${lapNum} recorded. Duration: ${durationStr}. Average power: ${lapPwr} watts. Average heart rate: ${lapHR} beats per minute.`
+  );
+}
+
+function renderLap(lap) {
+  const container = document.getElementById('laps-container');
+  const noLaps = document.getElementById('no-laps');
+  if (noLaps) noLaps.remove();
+
+  const h = Math.floor(lap.duration / 3600000);
+  const m = Math.floor((lap.duration % 3600000) / 60000);
+  const s = Math.floor((lap.duration % 60000) / 1000);
+  const timeStr = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+
+  const el = document.createElement('div');
+  el.className = 'lap-item';
+  el.setAttribute('role', 'listitem');
+  el.setAttribute('aria-label',
+    `Lap ${lap.num} at ${timeStr}. Average power ${lap.power} watts. Average heart rate ${lap.hr} beats per minute.`
+  );
+
+  el.innerHTML = `
+    <div class="lap-num">Lap ${lap.num}<br><span style="font-size:0.65rem;color:var(--muted)">${timeStr}</span></div>
+    <div class="lap-stats">
+      <div class="lap-stat">
+        <div class="lap-stat-label">Power</div>
+        <div class="lap-stat-val pwr" aria-hidden="true">${lap.power}w</div>
+      </div>
+      <div class="lap-stat">
+        <div class="lap-stat-label">HR</div>
+        <div class="lap-stat-val hr" aria-hidden="true">${lap.hr} bpm</div>
+      </div>
+    </div>
+  `;
+
+  // Insert newest lap at the top
+  container.insertBefore(el, container.firstChild);
+}
+
+function clearLapsUI() {
+  const container = document.getElementById('laps-container');
+  container.innerHTML = '<div id="no-laps" role="listitem">No laps recorded yet</div>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+═══════════════════════════════════════════════════════ */
+function showScreen(name) {
+  document.getElementById('connect-screen').style.display  = name === 'connect'  ? 'flex' : 'none';
+  document.getElementById('workout-screen').style.display  = name === 'workout'  ? 'flex' : 'none';
+}
+
+function updateStatus(text, cls) {
+  const badge = document.getElementById('status-badge');
+  badge.textContent = text;
+  badge.className = 'connected recording'.split(' ')
+    .reduce((acc, c) => (badge.classList.remove(c), acc), badge);
+  if (cls) badge.classList.add(cls);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ACCESSIBILITY — POLITE ANNOUNCEMENTS
+   Uses a visually-hidden live region so VoiceOver speaks
+   only when it has finished current speech (polite),
+   and never auto-reads the constantly-updating metrics.
+═══════════════════════════════════════════════════════ */
+function announce(msg) {
+  const el = document.getElementById('sr-announce');
+  el.textContent = '';
+  // Small timeout forces VoiceOver to treat it as a new event
+  setTimeout(() => { el.textContent = msg; }, 50);
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+showScreen('connect');
+</script>
+</body>
+</html>
