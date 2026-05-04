@@ -18,6 +18,7 @@
       --text: #f0f0f5;
       --muted: #7070a0;
       --green: #00ff99;
+      --cadence: #c084fc;
       --card-bg: #16161f;
     }
 
@@ -257,6 +258,11 @@
 
     .metric-card.power::before { background: var(--accent); }
     .metric-card.hr::before { background: var(--accent2); }
+    .metric-card.cadence::before { background: var(--cadence); }
+
+    .metric-card.cadence .metric-value { color: var(--cadence); }
+
+    .lap-stat-val.cad { color: var(--cadence); }
 
     .metric-label {
       font-size: 0.65rem;
@@ -397,6 +403,105 @@
       color: var(--green);
     }
 
+    /* ── AUDIO SETTINGS ── */
+    .audio-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .audio-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toggle-track {
+      width: 44px;
+      height: 26px;
+      border-radius: 100px;
+      background: var(--border);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    .toggle-track.on { background: var(--accent); }
+
+    .toggle-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+      pointer-events: none;
+    }
+
+    .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+
+    .audio-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .audio-option-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .interval-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .interval-btn {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 10px 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .interval-btn.selected {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0,229,255,0.08);
+    }
+
+    /* Audio indicator pill in header */
+    #audio-indicator {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border-radius: 100px;
+      background: rgba(0,229,255,0.1);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      display: none;
+    }
+
+    #audio-indicator.visible { display: inline-block; }
+
     /* Divider label */
     .section-label {
       font-size: 0.65rem;
@@ -420,7 +525,10 @@
 
   <header>
     <h1 aria-label="Cycling Companion App">Cycling Companion</h1>
-    <span id="status-badge" role="status" aria-live="polite">Disconnected</span>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span id="audio-indicator" aria-hidden="true">🔊</span>
+      <span id="status-badge" role="status" aria-live="polite">Disconnected</span>
+    </div>
   </header>
 
   <main id="main-content">
@@ -463,6 +571,52 @@
             onclick="connectSensor('hr')">
             Connect
           </button>
+        </div>
+      </div>
+
+      <!-- Audio announcements -->
+      <div class="audio-panel" role="group" aria-labelledby="audio-panel-label">
+
+        <div class="audio-panel-header">
+          <div>
+            <div class="sensor-label" id="audio-panel-label">Audio Announcements</div>
+            <div class="sensor-sub">Spoken metric updates during session</div>
+          </div>
+          <button class="toggle-track" id="audio-toggle"
+            role="switch"
+            aria-checked="false"
+            aria-label="Enable audio announcements"
+            onclick="toggleAudio()">
+            <div class="toggle-thumb"></div>
+          </button>
+        </div>
+
+        <div class="audio-options" id="audio-options" aria-hidden="true" style="display:none;">
+
+          <div>
+            <div class="audio-option-label">Announce every</div>
+            <div class="interval-grid" role="group" aria-label="Announcement interval">
+              <button class="interval-btn" data-mins="1"
+                aria-label="Every 1 minute" aria-pressed="false"
+                onclick="setInterval_(1)">1 min</button>
+              <button class="interval-btn" data-mins="2"
+                aria-label="Every 2 minutes" aria-pressed="false"
+                onclick="setInterval_(2)">2 min</button>
+              <button class="interval-btn selected" data-mins="5"
+                aria-label="Every 5 minutes" aria-pressed="true"
+                onclick="setInterval_(5)">5 min</button>
+              <button class="interval-btn" data-mins="10"
+                aria-label="Every 10 minutes" aria-pressed="false"
+                onclick="setInterval_(10)">10 min</button>
+            </div>
+          </div>
+
+          <button class="btn-sm" style="align-self:flex-start;"
+            aria-label="Test audio announcement now"
+            onclick="testAudio()">
+            Test Voice
+          </button>
+
         </div>
       </div>
 
@@ -526,6 +680,20 @@
           <div class="metric-unit">bpm</div>
         </div>
 
+        <div class="metric-card cadence"
+          role="region"
+          aria-label="Three second average cadence">
+          <div class="metric-label">3s Avg Cadence</div>
+          <div class="metric-value"
+            id="display-cadence"
+            tabindex="0"
+            aria-label="Three second average cadence: 0 revolutions per minute"
+            aria-live="off">
+            0
+          </div>
+          <div class="metric-unit">rpm</div>
+        </div>
+
       </div>
 
       <!-- Segment average cards -->
@@ -559,6 +727,20 @@
           <div class="metric-unit">bpm</div>
         </div>
 
+        <div class="metric-card cadence"
+          role="region"
+          aria-label="Segment average cadence">
+          <div class="metric-label">Seg Avg Cadence</div>
+          <div class="metric-value"
+            id="display-seg-cadence"
+            tabindex="0"
+            aria-label="Segment average cadence: 0 revolutions per minute"
+            aria-live="off">
+            0
+          </div>
+          <div class="metric-unit">rpm</div>
+        </div>
+
       </div>
 
       <!-- Lap button -->
@@ -576,10 +758,18 @@
         </div>
       </div>
 
+      <!-- Pause button -->
+      <button class="btn btn-lap" id="btn-pause"
+        aria-label="Pause workout session"
+        onclick="togglePause()"
+        style="border-color: var(--accent); color: var(--accent);">
+        ⏸  Pause
+      </button>
+
       <!-- End session controls -->
       <div class="controls-row">
         <button class="btn btn-outline" id="btn-end"
-          aria-label="End workout session and return to setup"
+          aria-label="End workout session and export or return to setup"
           onclick="endWorkout()" style="font-size:0.8rem; padding:14px 10px;">
           End Session
         </button>
@@ -589,6 +779,71 @@
           Discard
         </button>
       </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         EXPORT SCREEN
+    ════════════════════════════════════════════ -->
+    <section id="export-screen" aria-label="Export workout" style="display:none; flex-direction:column; gap:16px;">
+
+      <div class="connect-intro">
+        <strong>Session complete.</strong> Your workout is ready to export as a FIT file, which you can upload directly to TrainingPeaks.
+      </div>
+
+      <!-- Summary card -->
+      <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:10px;"
+        role="region" aria-label="Workout summary">
+        <div class="section-label" aria-hidden="true">Workout Summary</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;">
+          <div>
+            <div class="metric-label">Duration</div>
+            <div id="summary-duration" style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; color:var(--text);">--</div>
+          </div>
+          <div>
+            <div class="metric-label">Laps</div>
+            <div id="summary-laps" style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; color:var(--text);">--</div>
+          </div>
+          <div>
+            <div class="metric-label">Avg Power</div>
+            <div id="summary-power" style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; color:var(--accent);">-- w</div>
+          </div>
+          <div>
+            <div class="metric-label">Avg HR</div>
+            <div id="summary-hr" style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; color:var(--accent2);">-- bpm</div>
+          </div>
+          <div>
+            <div class="metric-label">Avg Cadence</div>
+            <div id="summary-cadence" style="font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; color:var(--cadence);">-- rpm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export button -->
+      <button class="btn btn-primary" id="btn-export"
+        aria-label="Download FIT file for upload to TrainingPeaks"
+        onclick="exportFIT()">
+        ↓  Download FIT File
+      </button>
+
+      <!-- TrainingPeaks instructions -->
+      <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px;"
+        role="region" aria-label="How to upload to TrainingPeaks">
+        <div class="section-label" style="margin-bottom:10px;">Upload to TrainingPeaks</div>
+        <ol style="list-style:none; display:flex; flex-direction:column; gap:8px; padding:0;">
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">1 &nbsp;</span>Tap Download FIT File above and save it to your Files app</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">2 &nbsp;</span>Open the TrainingPeaks app on your iPhone</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">3 &nbsp;</span>Tap the + button and choose Upload File</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">4 &nbsp;</span>Navigate to your FIT file in Files and select it</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">5 &nbsp;</span>TrainingPeaks will process and display your full ride data</li>
+        </ol>
+      </div>
+
+      <button class="btn btn-outline"
+        aria-label="Start a new session"
+        onclick="newSession()">
+        New Session
+      </button>
 
     </section>
 
@@ -616,17 +871,33 @@ const state = {
   // Rolling windows (3 seconds at ~1 sample/sec = 3 samples)
   powerWindow: [],
   hrWindow: [],
+  cadenceWindow: [],
   WINDOW_SIZE: 3,
 
   // Lap tracking
   laps: [],
   lapPowerSamples: [],
   lapHrSamples: [],
+  lapCadenceSamples: [],
   lapCount: 0,
+
+  // Full data stream for FIT export (one record per second)
+  recordStream: [],   // [{timestamp, power, hr, cadence}, ...]
+
+  // Audio announcements
+  audio: {
+    enabled: false,
+    intervalMins: 5,
+    intervalTimer: null,
+    lastAnnouncedMin: -1,
+  },
 
   // Timer
   startTime: null,
   lapStartTime: null,
+  pausedAt: null,
+  totalPausedMs: 0,
+  isPaused: false,
   timerInterval: null,
   demoInterval: null,
 };
@@ -667,6 +938,12 @@ async function connectSensor(type) {
         ? parseHeartRate(e.target.value)
         : parsePower(e.target.value);
       if (val !== null) pushSample(isHR ? 'hr' : 'power', val);
+
+      // Cadence is also in the power characteristic
+      if (!isHR) {
+        const cad = parseCadence(e.target.value);
+        if (cad !== null) pushSample('cadence', cad);
+      }
     });
 
     device.addEventListener('gattserverdisconnected', () => {
@@ -715,11 +992,48 @@ function parsePower(data) {
   return data.getInt16(2, true);
 }
 
+function parseCadence(data) {
+  // Flags are at byte 0–1. Bit 4 of flags indicates crank revolution data is present.
+  if (data.byteLength < 2) return null;
+  const flags = data.getUint16(0, true);
+  const hasCrankData = flags & 0x0010;
+  if (!hasCrankData) return null;
+
+  // Crank data follows power (bytes 4–7): cumulative crank revs (uint16) + last crank event time (uint16)
+  if (data.byteLength < 8) return null;
+
+  const crankRevs = data.getUint16(4, true);
+  const crankTime = data.getUint16(6, true); // unit: 1/1024 seconds
+
+  // Calculate RPM from delta between this and last reading
+  if (parseCadence._lastRevs === undefined) {
+    parseCadence._lastRevs = crankRevs;
+    parseCadence._lastTime = crankTime;
+    return null;
+  }
+
+  let revDelta  = crankRevs - parseCadence._lastRevs;
+  let timeDelta = crankTime - parseCadence._lastTime;
+
+  // Handle uint16 rollover
+  if (revDelta  < 0) revDelta  += 65536;
+  if (timeDelta < 0) timeDelta += 65536;
+
+  parseCadence._lastRevs = crankRevs;
+  parseCadence._lastTime = crankTime;
+
+  if (timeDelta === 0 || revDelta === 0) return 0;
+
+  // timeDelta is in 1/1024 s units; convert to minutes for RPM
+  const rpm = Math.round((revDelta / timeDelta) * 1024 * 60);
+  return (rpm > 0 && rpm < 250) ? rpm : null; // sanity bounds
+}
+
 /* ═══════════════════════════════════════════════════════
    SAMPLE MANAGEMENT
 ═══════════════════════════════════════════════════════ */
 function pushSample(type, value) {
-  if (!state.isRecording) return;
+  if (!state.isRecording || state.isPaused) return;
 
   if (type === 'power') {
     state.powerWindow.push(value);
@@ -728,6 +1042,17 @@ function pushSample(type, value) {
     state.lapPowerSamples.push(value);
     updateMetricDisplay('power', avg(state.powerWindow));
     updateSegDisplay('power', avg(state.lapPowerSamples));
+    // Log to full stream (keyed by second offset)
+    logToStream('power', value);
+
+  } else if (type === 'cadence') {
+    state.cadenceWindow.push(value);
+    if (state.cadenceWindow.length > state.WINDOW_SIZE)
+      state.cadenceWindow.shift();
+    state.lapCadenceSamples.push(value);
+    updateMetricDisplay('cadence', avg(state.cadenceWindow));
+    updateSegDisplay('cadence', avg(state.lapCadenceSamples));
+    logToStream('cadence', value);
 
   } else {
     state.hrWindow.push(value);
@@ -736,6 +1061,7 @@ function pushSample(type, value) {
     state.lapHrSamples.push(value);
     updateMetricDisplay('hr', avg(state.hrWindow));
     updateSegDisplay('hr', avg(state.lapHrSamples));
+    logToStream('hr', value);
   }
 }
 
@@ -754,6 +1080,10 @@ function updateMetricDisplay(type, value) {
     const el = document.getElementById('display-power');
     el.textContent = value;
     el.setAttribute('aria-label', `Three second average power: ${value} watts`);
+  } else if (type === 'cadence') {
+    const el = document.getElementById('display-cadence');
+    el.textContent = value;
+    el.setAttribute('aria-label', `Three second average cadence: ${value} revolutions per minute`);
   } else {
     const el = document.getElementById('display-hr');
     el.textContent = value;
@@ -766,6 +1096,10 @@ function updateSegDisplay(type, value) {
     const el = document.getElementById('display-seg-power');
     el.textContent = value;
     el.setAttribute('aria-label', `Segment average power: ${value} watts`);
+  } else if (type === 'cadence') {
+    const el = document.getElementById('display-seg-cadence');
+    el.textContent = value;
+    el.setAttribute('aria-label', `Segment average cadence: ${value} revolutions per minute`);
   } else {
     const el = document.getElementById('display-seg-hr');
     el.textContent = value;
@@ -783,6 +1117,9 @@ function updateStartButton() {
 
 function startWorkout() {
   state.isRecording = true;
+  state.isPaused = false;
+  state.pausedAt = null;
+  state.totalPausedMs = 0;
   state.isDemo = false;
   state.startTime = Date.now();
   state.lapStartTime = Date.now();
@@ -790,17 +1127,26 @@ function startWorkout() {
   state.laps = [];
   state.lapPowerSamples = [];
   state.lapHrSamples = [];
+  state.lapCadenceSamples = [];
   state.powerWindow = [];
   state.hrWindow = [];
+  state.cadenceWindow = [];
+  state.recordStream = [];
+  parseCadence._lastRevs = undefined;
+  parseCadence._lastTime = undefined;
 
   showScreen('workout');
   startTimer();
+  startAudioTimer();
   updateStatus('Recording', 'recording');
   announce('Session started. Three second rolling averages are now updating. Use the Lap button to record segment data.');
 }
 
 function startDemo() {
   state.isRecording = true;
+  state.isPaused = false;
+  state.pausedAt = null;
+  state.totalPausedMs = 0;
   state.isDemo = true;
   state.startTime = Date.now();
   state.lapStartTime = Date.now();
@@ -808,47 +1154,164 @@ function startDemo() {
   state.laps = [];
   state.lapPowerSamples = [];
   state.lapHrSamples = [];
+  state.lapCadenceSamples = [];
   state.powerWindow = [];
   state.hrWindow = [];
+  state.cadenceWindow = [];
+  state.recordStream = [];
 
   showScreen('workout');
   startTimer();
+  startAudioTimer();
   updateStatus('Demo', 'recording');
-  announce('Demo mode started with simulated power and heart rate data.');
+  announce('Demo mode started with simulated power, heart rate, and cadence data.');
 
   // Simulate sensor data
   state.demoInterval = setInterval(() => {
-    const power = 180 + Math.round((Math.random() - 0.5) * 40);
-    const hr    = 148 + Math.round((Math.random() - 0.5) * 14);
+    const power   = 180 + Math.round((Math.random() - 0.5) * 40);
+    const hr      = 148 + Math.round((Math.random() - 0.5) * 14);
+    const cadence = 88  + Math.round((Math.random() - 0.5) * 10);
     pushSample('power', power);
     pushSample('hr', hr);
+    pushSample('cadence', cadence);
   }, 1000);
 }
 
 function startTimer() {
   state.timerInterval = setInterval(() => {
-    const elapsed = Date.now() - state.startTime;
+    if (state.isPaused) return;
+    const elapsed = Date.now() - state.startTime - state.totalPausedMs;
     const h = Math.floor(elapsed / 3600000);
     const m = Math.floor((elapsed % 3600000) / 60000);
     const s = Math.floor((elapsed % 60000) / 1000);
-    const str = `${pad(h)}:${pad(m)}:${pad(s)}`;
-    document.getElementById('elapsed-time').textContent = str;
-    // No aria-live update — VoiceOver reads this only when user navigates to it
+    document.getElementById('elapsed-time').textContent =
+      `${pad(h)}:${pad(m)}:${pad(s)}`;
   }, 1000);
+}
+
+function togglePause() {
+  const btn     = document.getElementById('btn-pause');
+  const lapBtn  = document.getElementById('btn-lap');
+
+  if (!state.isPaused) {
+    // ── PAUSE ──
+    state.isPaused = true;
+    state.pausedAt = Date.now();
+
+    // Stop demo interval if running
+    if (state.demoInterval) {
+      clearInterval(state.demoInterval);
+      state.demoInterval = null;
+    }
+
+    // Stop audio
+    stopAudioTimer();
+
+    // Update pause button — force a full redraw by toggling a class
+    btn.textContent = '▶\u00A0\u00A0Resume';
+    btn.setAttribute('aria-label', 'Resume workout session');
+    btn.setAttribute('data-paused', 'true');
+    btn.style.cssText = 'border-color: var(--green); color: var(--green); width:100%; font-family:"Syne",sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border-width:1px; border-style:solid; border-radius:10px; padding:18px; background:var(--surface); cursor:pointer;';
+
+    // Disable lap button while paused
+    lapBtn.disabled = true;
+    lapBtn.setAttribute('aria-label', 'Lap recording disabled while paused');
+    lapBtn.style.opacity = '0.35';
+
+    updateStatus('Paused', '');
+
+    // Always speak pause confirmation — this is critical feedback
+    speak('Workout paused.');
+
+  } else {
+    // ── RESUME ──
+    const pauseDuration = Date.now() - state.pausedAt;
+    state.totalPausedMs += pauseDuration;
+    state.lapStartTime  += pauseDuration;
+    state.isPaused = false;
+    state.pausedAt = null;
+
+    // Restart demo interval if in demo mode
+    if (state.isDemo) {
+      state.demoInterval = setInterval(() => {
+        const power   = 180 + Math.round((Math.random() - 0.5) * 40);
+        const hr      = 148 + Math.round((Math.random() - 0.5) * 14);
+        const cadence = 88  + Math.round((Math.random() - 0.5) * 10);
+        pushSample('power', power);
+        pushSample('hr', hr);
+        pushSample('cadence', cadence);
+      }, 1000);
+    }
+
+    // Restart audio timer
+    startAudioTimer();
+
+    // Restore pause button
+    btn.textContent = '⏸\u00A0\u00A0Pause';
+    btn.setAttribute('aria-label', 'Pause workout session');
+    btn.setAttribute('data-paused', 'false');
+    btn.style.cssText = 'border-color: var(--accent); color: var(--accent); width:100%; font-family:"Syne",sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border-width:1px; border-style:solid; border-radius:10px; padding:18px; background:var(--surface); cursor:pointer;';
+
+    // Re-enable lap button
+    lapBtn.disabled = false;
+    lapBtn.setAttribute('aria-label', 'Record lap and save current segment averages');
+    lapBtn.style.opacity = '1';
+
+    updateStatus('Recording', 'recording');
+
+    // Always speak resume confirmation
+    speak('Workout resumed.');
+  }
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
 function endWorkout() {
   stopRecording();
+  updateStatus('Complete', 'connected');
+
+  // Calculate overall averages from full record stream
+  const allPower   = state.recordStream.map(r => r.power).filter(v => v > 0);
+  const allHR      = state.recordStream.map(r => r.hr).filter(v => v > 0);
+  const allCadence = state.recordStream.map(r => r.cadence).filter(v => v > 0);
+
+  const totalDuration = Date.now() - state.startTime;
+  const h = Math.floor(totalDuration / 3600000);
+  const m = Math.floor((totalDuration % 3600000) / 60000);
+  const s = Math.floor((totalDuration % 60000) / 1000);
+
+  document.getElementById('summary-duration').textContent =
+    h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  document.getElementById('summary-laps').textContent    = state.lapCount;
+  document.getElementById('summary-power').textContent   = (allPower.length   ? avg(allPower)   : 0) + ' w';
+  document.getElementById('summary-hr').textContent      = (allHR.length      ? avg(allHR)      : 0) + ' bpm';
+  document.getElementById('summary-cadence').textContent = (allCadence.length ? avg(allCadence) : 0) + ' rpm';
+
+  showScreen('export');
+  announce('Session ended. Your workout summary is shown. Tap Download FIT File to save and upload to TrainingPeaks.');
+}
+
+function newSession() {
+  state.recordStream = [];
+  state.laps = [];
+  state.lapCount = 0;
+  clearLapsUI();
+  document.getElementById('elapsed-time').textContent = '00:00:00';
+  updateMetricDisplay('power', 0);
+  updateMetricDisplay('hr', 0);
+  updateMetricDisplay('cadence', 0);
+  updateSegDisplay('power', 0);
+  updateSegDisplay('hr', 0);
+  updateSegDisplay('cadence', 0);
   showScreen('connect');
   updateStatus('Disconnected', '');
-  announce('Session ended.');
+  announce('Ready for a new session.');
 }
 
 function discardWorkout() {
   if (!confirm('Discard this session and clear all lap data?')) return;
   stopRecording();
+  state.recordStream = [];
   clearLapsUI();
   showScreen('connect');
   updateStatus('Disconnected', '');
@@ -861,6 +1324,7 @@ function stopRecording() {
   clearInterval(state.demoInterval);
   state.timerInterval = null;
   state.demoInterval = null;
+  stopAudioTimer();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -869,6 +1333,7 @@ function stopRecording() {
 function recordLap() {
   const lapPwr = avg(state.lapPowerSamples);
   const lapHR  = avg(state.lapHrSamples);
+  const lapCad = avg(state.lapCadenceSamples);
   const now = Date.now();
   const duration = now - state.lapStartTime;
 
@@ -879,6 +1344,7 @@ function recordLap() {
     num: lapNum,
     power: lapPwr,
     hr: lapHR,
+    cadence: lapCad,
     duration: duration,
   };
   state.laps.push(lapData);
@@ -886,11 +1352,13 @@ function recordLap() {
   // Reset lap accumulators and start time for next segment
   state.lapPowerSamples = [];
   state.lapHrSamples = [];
+  state.lapCadenceSamples = [];
   state.lapStartTime = now;
 
   // Reset segment average displays to zero for the new segment
   updateSegDisplay('power', 0);
   updateSegDisplay('hr', 0);
+  updateSegDisplay('cadence', 0);
 
   renderLap(lapData);
 
@@ -904,10 +1372,12 @@ function recordLap() {
       ? `${m} minute${m!==1?'s':''} and ${s} second${s!==1?'s':''}`
       : `${s} second${s!==1?'s':''}`;
 
-  // Polite announcement — VoiceOver reads this after current speech finishes
-  announce(
-    `Lap ${lapNum} recorded. Duration: ${durationStr}. Average power: ${lapPwr} watts. Average heart rate: ${lapHR} beats per minute.`
-  );
+  // Speak via speech synthesis if audio is enabled, otherwise fall back to VoiceOver live region
+  if (state.audio.enabled) {
+    speak(`Lap ${lapNum}. ${durationStr}. Power ${lapPwr} watts. Heart rate ${lapHR}. Cadence ${lapCad} rpm.`);
+  } else {
+    announce(`Lap ${lapNum} recorded. Duration: ${durationStr}. Average power: ${lapPwr} watts. Average heart rate: ${lapHR} beats per minute. Average cadence: ${lapCad} revolutions per minute.`);
+  }
 }
 
 function renderLap(lap) {
@@ -924,7 +1394,7 @@ function renderLap(lap) {
   el.className = 'lap-item';
   el.setAttribute('role', 'listitem');
   el.setAttribute('aria-label',
-    `Lap ${lap.num} at ${timeStr}. Average power ${lap.power} watts. Average heart rate ${lap.hr} beats per minute.`
+    `Lap ${lap.num} at ${timeStr}. Average power ${lap.power} watts. Average heart rate ${lap.hr} beats per minute. Average cadence ${lap.cadence} revolutions per minute.`
   );
 
   el.innerHTML = `
@@ -937,6 +1407,10 @@ function renderLap(lap) {
       <div class="lap-stat">
         <div class="lap-stat-label">HR</div>
         <div class="lap-stat-val hr" aria-hidden="true">${lap.hr} bpm</div>
+      </div>
+      <div class="lap-stat">
+        <div class="lap-stat-label">Cad</div>
+        <div class="lap-stat-val cad" aria-hidden="true">${lap.cadence} rpm</div>
       </div>
     </div>
   `;
@@ -951,11 +1425,337 @@ function clearLapsUI() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   DATA STREAM LOGGING
+═══════════════════════════════════════════════════════ */
+function logToStream(type, value) {
+  const offset = Math.floor((Date.now() - state.startTime) / 1000);
+  let record = state.recordStream.find(r => r.offset === offset);
+  if (!record) {
+    record = { offset, power: 0, hr: 0, cadence: 0 };
+    state.recordStream.push(record);
+  }
+  record[type === 'cadence' ? 'cadence' : type] = value;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FIT FILE EXPORT
+   Builds a valid binary .FIT file containing:
+   - File ID message
+   - Device info
+   - One data record per second (power, HR, cadence)
+   - Lap messages for each recorded segment
+   - Session summary message
+═══════════════════════════════════════════════════════ */
+function exportFIT() {
+  try {
+    const fitBytes = buildFITFile();
+    const blob = new Blob([fitBytes], { type: 'application/octet-stream' });
+    const url  = URL.createObjectURL(blob);
+
+    // Build filename from session start time
+    const d = new Date(state.startTime);
+    const dateStr = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+    const filename = `cycling_${dateStr}.fit`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    announce('FIT file downloaded. Open your Files app, find the file, and share it to TrainingPeaks.');
+  } catch (e) {
+    announce('Export failed: ' + e.message);
+  }
+}
+
+function buildFITFile() {
+  // FIT epoch starts 1989-12-31 00:00:00 UTC
+  const FIT_EPOCH = Date.UTC(1989, 11, 31, 0, 0, 0);
+  const toFitTime = (ms) => Math.round((ms - FIT_EPOCH) / 1000);
+
+  const startFit = toFitTime(state.startTime);
+  const endFit   = toFitTime(state.startTime + (state.recordStream.length * 1000));
+
+  const messages = [];
+
+  // ── Definition + File ID (mesg_num 0) ──
+  messages.push(defMsg(0, 0, [
+    { num: 0,  size: 4, base: 0x86 }, // type (uint32)
+    { num: 1,  size: 2, base: 0x84 }, // manufacturer (uint16)
+    { num: 2,  size: 2, base: 0x84 }, // product (uint16)
+    { num: 4,  size: 1, base: 0x00 }, // file type (enum)
+  ]));
+  messages.push(dataMsg(0, [
+    u32(0x00000000),  // serial
+    u16(0xFF01),      // manufacturer: development
+    u16(0x0001),      // product id
+    u8(4),            // file type = activity
+  ]));
+
+  // ── Definition + Record messages (mesg_num 20) ──
+  messages.push(defMsg(1, 20, [
+    { num: 253, size: 4, base: 0x86 }, // timestamp
+    { num: 7,   size: 2, base: 0x84 }, // power (uint16, watts)
+    { num: 3,   size: 1, base: 0x02 }, // heart_rate (uint8, bpm)
+    { num: 4,   size: 1, base: 0x02 }, // cadence (uint8, rpm)
+  ]));
+
+  state.recordStream.forEach((rec) => {
+    const ts = startFit + rec.offset;
+    messages.push(dataMsg(1, [
+      u32(ts),
+      u16(rec.power),
+      u8(rec.hr),
+      u8(rec.cadence),
+    ]));
+  });
+
+  // ── Definition + Lap messages (mesg_num 19) ──
+  messages.push(defMsg(2, 19, [
+    { num: 253, size: 4, base: 0x86 }, // timestamp
+    { num: 2,   size: 4, base: 0x86 }, // start_time
+    { num: 7,   size: 4, base: 0x86 }, // total_elapsed_time (ms → * 1000 for FIT uint32 in ms)
+    { num: 18,  size: 2, base: 0x84 }, // avg_power
+    { num: 16,  size: 1, base: 0x02 }, // avg_heart_rate
+    { num: 20,  size: 1, base: 0x02 }, // avg_cadence
+  ]));
+
+  let lapStartFit = startFit;
+  state.laps.forEach((lap) => {
+    const lapEndFit = lapStartFit + Math.round(lap.duration / 1000);
+    messages.push(dataMsg(2, [
+      u32(lapEndFit),
+      u32(lapStartFit),
+      u32(lap.duration), // total_elapsed_time in ms
+      u16(lap.power),
+      u8(lap.hr),
+      u8(lap.cadence),
+    ]));
+    lapStartFit = lapEndFit;
+  });
+
+  // ── Definition + Session message (mesg_num 18) ──
+  const allPower   = state.recordStream.map(r => r.power).filter(v => v > 0);
+  const allHR      = state.recordStream.map(r => r.hr).filter(v => v > 0);
+  const allCadence = state.recordStream.map(r => r.cadence).filter(v => v > 0);
+  const totalMs    = state.recordStream.length * 1000;
+
+  messages.push(defMsg(3, 18, [
+    { num: 253, size: 4, base: 0x86 }, // timestamp
+    { num: 2,   size: 4, base: 0x86 }, // start_time
+    { num: 7,   size: 4, base: 0x86 }, // total_elapsed_time
+    { num: 20,  size: 2, base: 0x84 }, // avg_power
+    { num: 16,  size: 1, base: 0x02 }, // avg_heart_rate
+    { num: 22,  size: 1, base: 0x02 }, // avg_cadence
+    { num: 5,   size: 1, base: 0x00 }, // sport (enum): 2 = cycling
+    { num: 6,   size: 1, base: 0x00 }, // sub_sport: 6 = indoor_cycling
+  ]));
+  messages.push(dataMsg(3, [
+    u32(endFit),
+    u32(startFit),
+    u32(totalMs),
+    u16(allPower.length   ? avg(allPower)   : 0),
+    u8(allHR.length       ? avg(allHR)      : 0),
+    u8(allCadence.length  ? avg(allCadence) : 0),
+    u8(2),  // sport: cycling
+    u8(6),  // sub_sport: indoor cycling
+  ]));
+
+  // ── Definition + Activity message (mesg_num 34) ──
+  messages.push(defMsg(4, 34, [
+    { num: 253, size: 4, base: 0x86 }, // timestamp
+    { num: 1,   size: 4, base: 0x86 }, // total_timer_time
+    { num: 2,   size: 2, base: 0x84 }, // num_sessions
+    { num: 3,   size: 1, base: 0x00 }, // type (enum)
+    { num: 4,   size: 1, base: 0x00 }, // event
+    { num: 5,   size: 1, base: 0x00 }, // event_type
+  ]));
+  messages.push(dataMsg(4, [
+    u32(endFit),
+    u32(totalMs),
+    u16(1),  // num_sessions
+    u8(0),   // type: manual
+    u8(26),  // event: activity
+    u8(1),   // event_type: stop
+  ]));
+
+  // ── Assemble all message bytes ──
+  const body = concat(messages);
+
+  // ── FIT File Header (14 bytes) ──
+  const dataSize = body.length;
+  const header = new Uint8Array(14);
+  const hv = new DataView(header.buffer);
+  hv.setUint8(0, 14);          // header size
+  hv.setUint8(1, 0x10);        // protocol version
+  hv.setUint16(2, 0x0836, true); // profile version
+  hv.setUint32(4, dataSize, true);
+  // '.FIT' ASCII
+  header[8] = 0x2E; header[9] = 0x46; header[10] = 0x49; header[11] = 0x54;
+  hv.setUint16(12, crc16(header.slice(0, 12)), true);
+
+  // ── File CRC ──
+  const fileCrcBytes = new Uint8Array(2);
+  new DataView(fileCrcBytes.buffer).setUint16(0, crc16(body), true);
+
+  return concat([header, body, fileCrcBytes]);
+}
+
+/* ── FIT binary helpers ── */
+function u8(v)  { const b = new Uint8Array(1);  new DataView(b.buffer).setUint8(0, v >>> 0);         return b; }
+function u16(v) { const b = new Uint8Array(2);  new DataView(b.buffer).setUint16(0, v >>> 0, true);  return b; }
+function u32(v) { const b = new Uint8Array(4);  new DataView(b.buffer).setUint32(0, v >>> 0, true);  return b; }
+
+function concat(arrays) {
+  const total = arrays.reduce((s, a) => s + a.length, 0);
+  const out   = new Uint8Array(total);
+  let offset  = 0;
+  arrays.forEach(a => { out.set(a, offset); offset += a.length; });
+  return out;
+}
+
+function defMsg(localNum, globalNum, fields) {
+  // Header byte + reserved + arch + global mesg num + num fields + field definitions
+  const bytes = new Uint8Array(6 + fields.length * 3);
+  const dv    = new DataView(bytes.buffer);
+  dv.setUint8(0, 0x40 | (localNum & 0x0F)); // definition header
+  dv.setUint8(1, 0);                          // reserved
+  dv.setUint8(2, 0);                          // little-endian
+  dv.setUint16(3, globalNum, true);
+  dv.setUint8(5, fields.length);
+  fields.forEach((f, i) => {
+    dv.setUint8(6 + i * 3,     f.num);
+    dv.setUint8(6 + i * 3 + 1, f.size);
+    dv.setUint8(6 + i * 3 + 2, f.base);
+  });
+  return bytes;
+}
+
+function dataMsg(localNum, fieldArrays) {
+  const header = new Uint8Array([localNum & 0x0F]);
+  return concat([header, ...fieldArrays]);
+}
+
+function crc16(data) {
+  const table = [
+    0x0000,0xCC01,0xD801,0x1400,0xF001,0x3C00,0x2800,0xE401,
+    0xA001,0x6C00,0x7800,0xB401,0x5000,0x9C01,0x8801,0x4400,
+  ];
+  let crc = 0;
+  for (let i = 0; i < data.length; i++) {
+    let b = data[i];
+    crc = (table[b & 0xF] ^ (crc >> 4)) & 0xFFFF;
+    crc = (table[(b >> 4) & 0xF] ^ (crc >> 4)) & 0xFFFF;
+  }
+  return crc;
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUDIO ANNOUNCEMENTS
+═══════════════════════════════════════════════════════ */
+function toggleAudio() {
+  state.audio.enabled = !state.audio.enabled;
+  const btn     = document.getElementById('audio-toggle');
+  const options = document.getElementById('audio-options');
+  const indicator = document.getElementById('audio-indicator');
+
+  btn.classList.toggle('on', state.audio.enabled);
+  btn.setAttribute('aria-checked', state.audio.enabled.toString());
+  options.style.display = state.audio.enabled ? 'flex' : 'none';
+  options.setAttribute('aria-hidden', (!state.audio.enabled).toString());
+  indicator.classList.toggle('visible', state.audio.enabled);
+
+  announce(state.audio.enabled
+    ? `Audio announcements on. Will speak every ${state.audio.intervalMins} minute${state.audio.intervalMins > 1 ? 's' : ''}.`
+    : 'Audio announcements off.');
+}
+
+function setInterval_(mins) {
+  state.audio.intervalMins = mins;
+
+  // Update button states
+  document.querySelectorAll('.interval-btn').forEach(btn => {
+    const selected = parseInt(btn.dataset.mins) === mins;
+    btn.classList.toggle('selected', selected);
+    btn.setAttribute('aria-pressed', selected.toString());
+  });
+
+  announce(`Announcement interval set to ${mins} minute${mins > 1 ? 's' : ''}.`);
+}
+
+function testAudio() {
+  const power   = state.isRecording ? avg(state.powerWindow)   : 200;
+  const hr      = state.isRecording ? avg(state.hrWindow)      : 155;
+  const cadence = state.isRecording ? avg(state.cadenceWindow) : 90;
+  speak(`Test. Power ${power} watts. Heart rate ${hr} beats per minute. Cadence ${cadence} rpm.`);
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) {
+    // Fall back to VoiceOver live region if speech synthesis unavailable
+    announce(text);
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate   = 0.95;
+  utter.pitch  = 1;
+  utter.volume = 1;
+  window.speechSynthesis.speak(utter);
+}
+
+function startAudioTimer() {
+  if (state.audio.intervalTimer) clearInterval(state.audio.intervalTimer);
+  state.audio.lastAnnouncedMin = -1;
+
+  // Check every 15 seconds whether it's time to announce
+  state.audio.intervalTimer = setInterval(() => {
+    if (!state.audio.enabled || !state.isRecording) return;
+
+    const elapsedMs   = Date.now() - state.startTime;
+    const elapsedMins = Math.floor(elapsedMs / 60000);
+
+    // Only announce if we've hit a new multiple of the chosen interval
+    if (elapsedMins > 0
+      && elapsedMins % state.audio.intervalMins === 0
+      && elapsedMins !== state.audio.lastAnnouncedMin) {
+
+      state.audio.lastAnnouncedMin = elapsedMins;
+      speakMetrics(elapsedMins);
+    }
+  }, 15000);
+}
+
+function speakMetrics(elapsedMins) {
+  const power   = avg(state.powerWindow);
+  const hr      = avg(state.hrWindow);
+  const cadence = avg(state.cadenceWindow);
+
+  const timeStr = elapsedMins >= 60
+    ? `${Math.floor(elapsedMins / 60)} hour${Math.floor(elapsedMins/60)>1?'s':''} ${elapsedMins % 60} minutes`
+    : `${elapsedMins} minute${elapsedMins > 1 ? 's' : ''}`;
+
+  speak(`${timeStr}. Power ${power} watts. Heart rate ${hr} beats per minute. Cadence ${cadence} rpm.`);
+}
+
+function stopAudioTimer() {
+  if (state.audio.intervalTimer) {
+    clearInterval(state.audio.intervalTimer);
+    state.audio.intervalTimer = null;
+  }
+  window.speechSynthesis && window.speechSynthesis.cancel();
+}
+
+/* ═══════════════════════════════════════════════════════
    SCREEN MANAGEMENT
 ═══════════════════════════════════════════════════════ */
 function showScreen(name) {
   document.getElementById('connect-screen').style.display  = name === 'connect'  ? 'flex' : 'none';
   document.getElementById('workout-screen').style.display  = name === 'workout'  ? 'flex' : 'none';
+  document.getElementById('export-screen').style.display   = name === 'export'   ? 'flex' : 'none';
 }
 
 function updateStatus(text, cls) {
