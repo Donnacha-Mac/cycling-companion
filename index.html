@@ -653,45 +653,30 @@
       <div class="metrics-grid" role="group" aria-label="Current averages">
 
         <div class="metric-card power"
-          role="region"
-          aria-label="Three second average power">
-          <div class="metric-label">3s Avg Power</div>
-          <div class="metric-value"
-            id="display-power"
-            tabindex="0"
-            aria-label="Three second average power: 0 watts"
-            aria-live="off">
-            0
-          </div>
-          <div class="metric-unit">watts</div>
+          tabindex="0"
+          id="display-power"
+          aria-label="Three second average power: 0 watts">
+          <div class="metric-label" aria-hidden="true">3s Avg Power</div>
+          <div class="metric-value" aria-hidden="true">0</div>
+          <div class="metric-unit" aria-hidden="true">watts</div>
         </div>
 
         <div class="metric-card hr"
-          role="region"
-          aria-label="Three second average heart rate">
-          <div class="metric-label">3s Avg HR</div>
-          <div class="metric-value"
-            id="display-hr"
-            tabindex="0"
-            aria-label="Three second average heart rate: 0 beats per minute"
-            aria-live="off">
-            0
-          </div>
-          <div class="metric-unit">bpm</div>
+          tabindex="0"
+          id="display-hr"
+          aria-label="Three second average heart rate: 0 beats per minute">
+          <div class="metric-label" aria-hidden="true">3s Avg HR</div>
+          <div class="metric-value" aria-hidden="true">0</div>
+          <div class="metric-unit" aria-hidden="true">bpm</div>
         </div>
 
         <div class="metric-card cadence"
-          role="region"
-          aria-label="Three second average cadence">
-          <div class="metric-label">3s Avg Cadence</div>
-          <div class="metric-value"
-            id="display-cadence"
-            tabindex="0"
-            aria-label="Three second average cadence: 0 revolutions per minute"
-            aria-live="off">
-            0
-          </div>
-          <div class="metric-unit">rpm</div>
+          tabindex="0"
+          id="display-cadence"
+          aria-label="Three second average cadence: 0 revolutions per minute">
+          <div class="metric-label" aria-hidden="true">3s Avg Cadence</div>
+          <div class="metric-value" aria-hidden="true">0</div>
+          <div class="metric-unit" aria-hidden="true">rpm</div>
         </div>
 
       </div>
@@ -700,45 +685,30 @@
       <div class="metrics-grid" role="group" aria-label="Current segment averages">
 
         <div class="metric-card power"
-          role="region"
-          aria-label="Segment average power">
-          <div class="metric-label">Seg Avg Power</div>
-          <div class="metric-value"
-            id="display-seg-power"
-            tabindex="0"
-            aria-label="Segment average power: 0 watts"
-            aria-live="off">
-            0
-          </div>
-          <div class="metric-unit">watts</div>
+          tabindex="0"
+          id="display-seg-power"
+          aria-label="Segment average power: 0 watts">
+          <div class="metric-label" aria-hidden="true">Seg Avg Power</div>
+          <div class="metric-value" aria-hidden="true">0</div>
+          <div class="metric-unit" aria-hidden="true">watts</div>
         </div>
 
         <div class="metric-card hr"
-          role="region"
-          aria-label="Segment average heart rate">
-          <div class="metric-label">Seg Avg HR</div>
-          <div class="metric-value"
-            id="display-seg-hr"
-            tabindex="0"
-            aria-label="Segment average heart rate: 0 beats per minute"
-            aria-live="off">
-            0
-          </div>
-          <div class="metric-unit">bpm</div>
+          tabindex="0"
+          id="display-seg-hr"
+          aria-label="Segment average heart rate: 0 beats per minute">
+          <div class="metric-label" aria-hidden="true">Seg Avg HR</div>
+          <div class="metric-value" aria-hidden="true">0</div>
+          <div class="metric-unit" aria-hidden="true">bpm</div>
         </div>
 
         <div class="metric-card cadence"
-          role="region"
-          aria-label="Segment average cadence">
-          <div class="metric-label">Seg Avg Cadence</div>
-          <div class="metric-value"
-            id="display-seg-cadence"
-            tabindex="0"
-            aria-label="Segment average cadence: 0 revolutions per minute"
-            aria-live="off">
-            0
-          </div>
-          <div class="metric-unit">rpm</div>
+          tabindex="0"
+          id="display-seg-cadence"
+          aria-label="Segment average cadence: 0 revolutions per minute">
+          <div class="metric-label" aria-hidden="true">Seg Avg Cadence</div>
+          <div class="metric-value" aria-hidden="true">0</div>
+          <div class="metric-unit" aria-hidden="true">rpm</div>
         </div>
 
       </div>
@@ -831,11 +801,9 @@
         role="region" aria-label="How to upload to TrainingPeaks">
         <div class="section-label" style="margin-bottom:10px;">Upload to TrainingPeaks</div>
         <ol style="list-style:none; display:flex; flex-direction:column; gap:8px; padding:0;">
-          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">1 &nbsp;</span>Tap Download FIT File above and save it to your Files app</li>
-          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">2 &nbsp;</span>Open the TrainingPeaks app on your iPhone</li>
-          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">3 &nbsp;</span>Tap the + button and choose Upload File</li>
-          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">4 &nbsp;</span>Navigate to your FIT file in Files and select it</li>
-          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">5 &nbsp;</span>TrainingPeaks will process and display your full ride data</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">1 &nbsp;</span>Tap Download FIT File above — the iOS share sheet will appear</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">2 &nbsp;</span>Swipe through the share options to find TrainingPeaks and tap it to upload directly, or tap Save to Files to save it first</li>
+          <li style="font-size:0.8rem; color:var(--muted); line-height:1.6;"><span style="color:var(--accent); font-family:'Syne',sans-serif; font-weight:700;">3 &nbsp;</span>If uploading via Files, open TrainingPeaks, tap + then Upload File, and select your FIT file</li>
         </ol>
       </div>
 
@@ -993,19 +961,29 @@ function parsePower(data) {
 }
 
 function parseCadence(data) {
-  // Flags are at byte 0–1. Bit 4 of flags indicates crank revolution data is present.
+  // Cycling Power Measurement flags: 2 bytes, little-endian
   if (data.byteLength < 2) return null;
   const flags = data.getUint16(0, true);
-  const hasCrankData = flags & 0x0010;
+
+  // Bit 5 (0x0020) = Crank Revolution Data Present
+  const hasCrankData   = flags & 0x0020;
   if (!hasCrankData) return null;
 
-  // Crank data follows power (bytes 4–7): cumulative crank revs (uint16) + last crank event time (uint16)
-  if (data.byteLength < 8) return null;
+  // Bit 4 (0x0010) = Wheel Revolution Data Present (6 bytes if set)
+  const hasWheelData   = flags & 0x0010;
 
-  const crankRevs = data.getUint16(4, true);
-  const crankTime = data.getUint16(6, true); // unit: 1/1024 seconds
+  // Byte layout:
+  //   [0–1]  flags (uint16)
+  //   [2–3]  instantaneous power (sint16)
+  //   [4–7]  wheel revs (uint32) + wheel event time (uint16)  ← only if bit 4 set
+  //   next   crank revs (uint16) + crank event time (uint16)
+  const crankOffset = 4 + (hasWheelData ? 6 : 0);
 
-  // Calculate RPM from delta between this and last reading
+  if (data.byteLength < crankOffset + 4) return null;
+
+  const crankRevs = data.getUint16(crankOffset,     true);
+  const crankTime = data.getUint16(crankOffset + 2, true); // 1/1024 s units
+
   if (parseCadence._lastRevs === undefined) {
     parseCadence._lastRevs = crankRevs;
     parseCadence._lastTime = crankTime;
@@ -1022,11 +1000,12 @@ function parseCadence(data) {
   parseCadence._lastRevs = crankRevs;
   parseCadence._lastTime = crankTime;
 
-  if (timeDelta === 0 || revDelta === 0) return 0;
+  if (timeDelta === 0) return 0;
+  if (revDelta  === 0) return 0;
 
-  // timeDelta is in 1/1024 s units; convert to minutes for RPM
+  // Convert to RPM: timeDelta is in 1/1024 s, so multiply by 1024 to get seconds, then by 60 for RPM
   const rpm = Math.round((revDelta / timeDelta) * 1024 * 60);
-  return (rpm > 0 && rpm < 250) ? rpm : null; // sanity bounds
+  return (rpm > 0 && rpm < 250) ? rpm : null;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1077,33 +1056,33 @@ function avg(arr) {
 ═══════════════════════════════════════════════════════ */
 function updateMetricDisplay(type, value) {
   if (type === 'power') {
-    const el = document.getElementById('display-power');
-    el.textContent = value;
-    el.setAttribute('aria-label', `Three second average power: ${value} watts`);
+    const card = document.getElementById('display-power');
+    card.setAttribute('aria-label', `Three second average power: ${value} watts`);
+    card.querySelector('.metric-value').textContent = value;
   } else if (type === 'cadence') {
-    const el = document.getElementById('display-cadence');
-    el.textContent = value;
-    el.setAttribute('aria-label', `Three second average cadence: ${value} revolutions per minute`);
+    const card = document.getElementById('display-cadence');
+    card.setAttribute('aria-label', `Three second average cadence: ${value} revolutions per minute`);
+    card.querySelector('.metric-value').textContent = value;
   } else {
-    const el = document.getElementById('display-hr');
-    el.textContent = value;
-    el.setAttribute('aria-label', `Three second average heart rate: ${value} beats per minute`);
+    const card = document.getElementById('display-hr');
+    card.setAttribute('aria-label', `Three second average heart rate: ${value} beats per minute`);
+    card.querySelector('.metric-value').textContent = value;
   }
 }
 
 function updateSegDisplay(type, value) {
   if (type === 'power') {
-    const el = document.getElementById('display-seg-power');
-    el.textContent = value;
-    el.setAttribute('aria-label', `Segment average power: ${value} watts`);
+    const card = document.getElementById('display-seg-power');
+    card.setAttribute('aria-label', `Segment average power: ${value} watts`);
+    card.querySelector('.metric-value').textContent = value;
   } else if (type === 'cadence') {
-    const el = document.getElementById('display-seg-cadence');
-    el.textContent = value;
-    el.setAttribute('aria-label', `Segment average cadence: ${value} revolutions per minute`);
+    const card = document.getElementById('display-seg-cadence');
+    card.setAttribute('aria-label', `Segment average cadence: ${value} revolutions per minute`);
+    card.querySelector('.metric-value').textContent = value;
   } else {
-    const el = document.getElementById('display-seg-hr');
-    el.textContent = value;
-    el.setAttribute('aria-label', `Segment average heart rate: ${value} beats per minute`);
+    const card = document.getElementById('display-seg-hr');
+    card.setAttribute('aria-label', `Segment average heart rate: ${value} beats per minute`);
+    card.querySelector('.metric-value').textContent = value;
   }
 }
 
@@ -1449,23 +1428,38 @@ function logToStream(type, value) {
 function exportFIT() {
   try {
     const fitBytes = buildFITFile();
-    const blob = new Blob([fitBytes], { type: 'application/octet-stream' });
-    const url  = URL.createObjectURL(blob);
 
     // Build filename from session start time
     const d = new Date(state.startTime);
     const dateStr = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
     const filename = `cycling_${dateStr}.fit`;
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const blob = new Blob([fitBytes], { type: 'application/octet-stream' });
+    const file = new File([blob], filename, { type: 'application/octet-stream' });
 
-    announce('FIT file downloaded. Open your Files app, find the file, and share it to TrainingPeaks.');
+    // Use Web Share API for native iOS share sheet (Save to Files, TrainingPeaks, etc.)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Cycling Workout' })
+        .then(() => speak('Workout shared successfully.'))
+        .catch((err) => {
+          if (err.name !== 'AbortError') {
+            announce('Share failed: ' + err.message);
+          }
+        });
+
+    } else {
+      // Fallback to direct download if Web Share not available
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      announce('FIT file downloaded. Open your Files app, find the file, and share it to TrainingPeaks.');
+    }
+
   } catch (e) {
     announce('Export failed: ' + e.message);
   }
