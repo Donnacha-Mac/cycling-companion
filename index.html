@@ -574,6 +574,33 @@
         </div>
       </div>
 
+      <!-- Power smoothing -->
+      <div class="audio-panel" role="group" aria-labelledby="smoothing-label">
+        <div class="audio-panel-header">
+          <div>
+            <div class="sensor-label" id="smoothing-label">Power Smoothing</div>
+            <div class="sensor-sub" id="smoothing-sub">Currently averaging over 10 seconds</div>
+          </div>
+        </div>
+        <div>
+          <div class="audio-option-label">Averaging window</div>
+          <div class="interval-grid" role="group" aria-label="Power smoothing window">
+            <button class="interval-btn" data-secs="3"
+              aria-label="3 second average" aria-pressed="false"
+              onclick="setSmoothing(3)">3s</button>
+            <button class="interval-btn" data-secs="5"
+              aria-label="5 second average" aria-pressed="false"
+              onclick="setSmoothing(5)">5s</button>
+            <button class="interval-btn selected" data-secs="10"
+              aria-label="10 second average" aria-pressed="true"
+              onclick="setSmoothing(10)">10s</button>
+            <button class="interval-btn" data-secs="30"
+              aria-label="30 second average" aria-pressed="false"
+              onclick="setSmoothing(30)">30s</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Audio announcements -->
       <div class="audio-panel" role="group" aria-labelledby="audio-panel-label">
 
@@ -620,6 +647,33 @@
         </div>
       </div>
 
+      <!-- Power smoothing -->
+      <div class="audio-panel" role="group" aria-labelledby="smooth-panel-label">
+        <div class="audio-panel-header">
+          <div>
+            <div class="sensor-label" id="smooth-panel-label">Power Smoothing</div>
+            <div class="sensor-sub">Rolling average window for power display</div>
+          </div>
+        </div>
+        <div>
+          <div class="audio-option-label">Average over</div>
+          <div class="interval-grid" role="group" aria-label="Power smoothing window">
+            <button class="interval-btn" data-secs="3"
+              aria-label="3 second average" aria-pressed="false"
+              onclick="setSmoothing(3)">3s</button>
+            <button class="interval-btn" data-secs="5"
+              aria-label="5 second average" aria-pressed="false"
+              onclick="setSmoothing(5)">5s</button>
+            <button class="interval-btn selected" data-secs="10"
+              aria-label="10 second average" aria-pressed="true"
+              onclick="setSmoothing(10)">10s</button>
+            <button class="interval-btn" data-secs="30"
+              aria-label="30 second average" aria-pressed="false"
+              onclick="setSmoothing(30)">30s</button>
+          </div>
+        </div>
+      </div>
+
       <button class="btn btn-primary" id="btn-start"
         aria-label="Start workout session"
         onclick="startWorkout()" disabled>
@@ -631,6 +685,14 @@
         onclick="startDemo()">
         Start in Demo Mode
       </button>
+
+      <!-- Cadence diagnostic panel -->
+      <div id="diag-panel" style="display:none; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:16px; flex-direction:column; gap:10px;"
+        role="region" aria-label="Cadence diagnostic information">
+        <div class="section-label">Cadence Diagnostic</div>
+        <div id="diag-output" style="font-size:0.72rem; color:var(--muted); line-height:1.8; word-break:break-all;"></div>
+        <button class="btn-sm" aria-label="Clear diagnostic output" onclick="clearDiag()">Clear</button>
+      </div>
 
     </section>
 
@@ -655,8 +717,8 @@
         <div class="metric-card power"
           tabindex="0"
           id="display-power"
-          aria-label="Three second average power: 0 watts">
-          <div class="metric-label" aria-hidden="true">3s Avg Power</div>
+          aria-label="10 second average power: 0 watts">
+          <div class="metric-label" aria-hidden="true">10s Avg Power</div>
           <div class="metric-value" aria-hidden="true">0</div>
           <div class="metric-unit" aria-hidden="true">watts</div>
         </div>
@@ -664,8 +726,8 @@
         <div class="metric-card hr"
           tabindex="0"
           id="display-hr"
-          aria-label="Three second average heart rate: 0 beats per minute">
-          <div class="metric-label" aria-hidden="true">3s Avg HR</div>
+          aria-label="10 second average heart rate: 0 beats per minute">
+          <div class="metric-label" aria-hidden="true">10s Avg HR</div>
           <div class="metric-value" aria-hidden="true">0</div>
           <div class="metric-unit" aria-hidden="true">bpm</div>
         </div>
@@ -673,8 +735,8 @@
         <div class="metric-card cadence"
           tabindex="0"
           id="display-cadence"
-          aria-label="Three second average cadence: 0 revolutions per minute">
-          <div class="metric-label" aria-hidden="true">3s Avg Cadence</div>
+          aria-label="10 second average cadence: 0 revolutions per minute">
+          <div class="metric-label" aria-hidden="true">10s Avg Cadence</div>
           <div class="metric-value" aria-hidden="true">0</div>
           <div class="metric-unit" aria-hidden="true">rpm</div>
         </div>
@@ -836,11 +898,11 @@ const state = {
   isRecording: false,
   isDemo: false,
 
-  // Rolling windows (3 seconds at ~1 sample/sec = 3 samples)
+  // Rolling windows — size controlled by smoothing selector (default 10s)
   powerWindow: [],
   hrWindow: [],
   cadenceWindow: [],
-  WINDOW_SIZE: 3,
+  WINDOW_SIZE: 10,
 
   // Lap tracking
   laps: [],
@@ -851,6 +913,9 @@ const state = {
 
   // Full data stream for FIT export (one record per second)
   recordStream: [],   // [{timestamp, power, hr, cadence}, ...]
+
+  // Diagnostic
+  diagPacketCount: 0,
 
   // Audio announcements
   audio: {
@@ -911,6 +976,12 @@ async function connectSensor(type) {
       if (!isHR) {
         const cad = parseCadence(e.target.value);
         if (cad !== null) pushSample('cadence', cad);
+
+        // Diagnostic: capture first few packets and display raw bytes
+        if (state.diagPacketCount < 3) {
+          state.diagPacketCount++;
+          logDiagPacket(e.target.value);
+        }
       }
     });
 
@@ -1021,12 +1092,11 @@ function pushSample(type, value) {
     state.lapPowerSamples.push(value);
     updateMetricDisplay('power', avg(state.powerWindow));
     updateSegDisplay('power', avg(state.lapPowerSamples));
-    // Log to full stream (keyed by second offset)
     logToStream('power', value);
 
   } else if (type === 'cadence') {
     state.cadenceWindow.push(value);
-    if (state.cadenceWindow.length > state.WINDOW_SIZE)
+    if (state.cadenceWindow.length > 3)
       state.cadenceWindow.shift();
     state.lapCadenceSamples.push(value);
     updateMetricDisplay('cadence', avg(state.cadenceWindow));
@@ -1035,7 +1105,7 @@ function pushSample(type, value) {
 
   } else {
     state.hrWindow.push(value);
-    if (state.hrWindow.length > state.WINDOW_SIZE)
+    if (state.hrWindow.length > 3)
       state.hrWindow.shift();
     state.lapHrSamples.push(value);
     updateMetricDisplay('hr', avg(state.hrWindow));
@@ -1055,17 +1125,19 @@ function avg(arr) {
     only reads them when the user navigates to them)
 ═══════════════════════════════════════════════════════ */
 function updateMetricDisplay(type, value) {
+  const pw = state.WINDOW_SIZE;
   if (type === 'power') {
     const card = document.getElementById('display-power');
-    card.setAttribute('aria-label', `Three second average power: ${value} watts`);
+    card.setAttribute('aria-label', `${pw} second average power: ${value} watts`);
+    card.querySelector('.metric-label').textContent = `${pw}s Avg Power`;
     card.querySelector('.metric-value').textContent = value;
   } else if (type === 'cadence') {
     const card = document.getElementById('display-cadence');
-    card.setAttribute('aria-label', `Three second average cadence: ${value} revolutions per minute`);
+    card.setAttribute('aria-label', `3 second average cadence: ${value} revolutions per minute`);
     card.querySelector('.metric-value').textContent = value;
   } else {
     const card = document.getElementById('display-hr');
-    card.setAttribute('aria-label', `Three second average heart rate: ${value} beats per minute`);
+    card.setAttribute('aria-label', `3 second average heart rate: ${value} beats per minute`);
     card.querySelector('.metric-value').textContent = value;
   }
 }
@@ -1100,6 +1172,7 @@ function startWorkout() {
   state.pausedAt = null;
   state.totalPausedMs = 0;
   state.isDemo = false;
+  state.diagPacketCount = 0;
   state.startTime = Date.now();
   state.lapStartTime = Date.now();
   state.lapCount = 0;
@@ -1118,7 +1191,7 @@ function startWorkout() {
   startTimer();
   startAudioTimer();
   updateStatus('Recording', 'recording');
-  announce('Session started. Three second rolling averages are now updating. Use the Lap button to record segment data.');
+  announce(`Session started. Power averaged over ${state.WINDOW_SIZE} seconds. Use the Lap button to record segment data.`);
 }
 
 function startDemo() {
@@ -1650,6 +1723,45 @@ function crc16(data) {
 /* ═══════════════════════════════════════════════════════
    AUDIO ANNOUNCEMENTS
 ═══════════════════════════════════════════════════════ */
+function setSmoothing(secs) {
+  state.WINDOW_SIZE = secs;
+
+  // Trim existing windows if new size is smaller
+  if (state.powerWindow.length   > secs) state.powerWindow   = state.powerWindow.slice(-secs);
+  if (state.hrWindow.length      > secs) state.hrWindow      = state.hrWindow.slice(-secs);
+  if (state.cadenceWindow.length > secs) state.cadenceWindow = state.cadenceWindow.slice(-secs);
+
+  // Update selector button states
+  document.querySelectorAll('[data-secs]').forEach(btn => {
+    const selected = parseInt(btn.dataset.secs) === secs;
+    btn.classList.toggle('selected', selected);
+    btn.setAttribute('aria-pressed', selected.toString());
+  });
+
+  // Update subtitle
+  document.getElementById('smoothing-sub').textContent =
+    `Currently averaging over ${secs} second${secs > 1 ? 's' : ''}`;
+
+  // Update metric card labels on workout screen to reflect new window
+  const label = `${secs}s Avg`;
+  const pwrCard = document.getElementById('display-power');
+  const hrCard  = document.getElementById('display-hr');
+  const cadCard = document.getElementById('display-cadence');
+  if (pwrCard) pwrCard.querySelector('.metric-label').textContent = `${label} Power`;
+  if (hrCard)  hrCard.querySelector('.metric-label').textContent  = `${label} HR`;
+  if (cadCard) cadCard.querySelector('.metric-label').textContent = `${label} Cadence`;
+
+  // Update aria-labels to match
+  if (pwrCard) pwrCard.setAttribute('aria-label',
+    pwrCard.getAttribute('aria-label').replace(/^\d+s/, `${secs}s`));
+  if (hrCard)  hrCard.setAttribute('aria-label',
+    hrCard.getAttribute('aria-label').replace(/^\d+s/, `${secs}s`));
+  if (cadCard) cadCard.setAttribute('aria-label',
+    cadCard.getAttribute('aria-label').replace(/^\d+s/, `${secs}s`));
+
+  announce(`Power smoothing set to ${secs} second${secs > 1 ? 's' : ''}.`);
+}
+
 function toggleAudio() {
   state.audio.enabled = !state.audio.enabled;
   const btn     = document.getElementById('audio-toggle');
@@ -1680,7 +1792,33 @@ function setInterval_(mins) {
   announce(`Announcement interval set to ${mins} minute${mins > 1 ? 's' : ''}.`);
 }
 
-function testAudio() {
+function setSmoothing(secs) {
+  state.WINDOW_SIZE = secs;
+
+  // Update button states
+  document.querySelectorAll('[data-secs]').forEach(btn => {
+    const selected = parseInt(btn.dataset.secs) === secs;
+    btn.classList.toggle('selected', selected);
+    btn.setAttribute('aria-pressed', selected.toString());
+  });
+
+  // Update power card label on workout screen immediately if visible
+  const powerCard = document.getElementById('display-power');
+  if (powerCard) {
+    powerCard.querySelector('.metric-label').textContent = `${secs}s Avg Power`;
+    // Update aria-label with current displayed value
+    const currentVal = powerCard.querySelector('.metric-value').textContent;
+    powerCard.setAttribute('aria-label', `${secs} second average power: ${currentVal} watts`);
+  }
+
+  // Also update seg power card label
+  const segPowerCard = document.getElementById('display-seg-power');
+  if (segPowerCard) {
+    segPowerCard.querySelector('.metric-label').textContent = `Seg Avg Power`;
+  }
+
+  announce(`Power smoothing set to ${secs} seconds.`);
+}
   const power   = state.isRecording ? avg(state.powerWindow)   : 200;
   const hr      = state.isRecording ? avg(state.hrWindow)      : 155;
   const cadence = state.isRecording ? avg(state.cadenceWindow) : 90;
@@ -1741,6 +1879,52 @@ function stopAudioTimer() {
     state.audio.intervalTimer = null;
   }
   window.speechSynthesis && window.speechSynthesis.cancel();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CADENCE DIAGNOSTIC
+═══════════════════════════════════════════════════════ */
+function logDiagPacket(data) {
+  const panel  = document.getElementById('diag-panel');
+  const output = document.getElementById('diag-output');
+  panel.style.display = 'flex';
+
+  // Raw hex bytes
+  const bytes = Array.from(new Uint8Array(data.buffer));
+  const hex   = bytes.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+
+  // Decode flags
+  const flags       = data.getUint16(0, true);
+  const hasWheel    = !!(flags & 0x0010);
+  const hasCrank    = !!(flags & 0x0020);
+  const crankOffset = 4 + (hasWheel ? 6 : 0);
+
+  let crankInfo = 'Crank flag not set';
+  if (hasCrank && data.byteLength >= crankOffset + 4) {
+    const revs = data.getUint16(crankOffset,     true);
+    const time = data.getUint16(crankOffset + 2, true);
+    crankInfo  = `Revs: ${revs}, Time: ${time} (offset ${crankOffset})`;
+  } else if (hasCrank) {
+    crankInfo = `Crank flag set but packet too short (${data.byteLength} bytes, need ${crankOffset + 4})`;
+  }
+
+  const entry = document.createElement('div');
+  entry.style.cssText = 'border-top:1px solid var(--border); padding-top:8px; margin-top:4px;';
+  entry.innerHTML =
+    `<strong style="color:var(--text)">Packet ${state.diagPacketCount}</strong><br>` +
+    `Bytes (${bytes.length}): <span style="color:var(--accent)">${hex}</span><br>` +
+    `Flags: 0x${flags.toString(16).padStart(4,'0').toUpperCase()} ` +
+    `| Wheel: ${hasWheel ? 'YES' : 'no'} | Crank: ${hasCrank ? 'YES' : 'no'}<br>` +
+    `${crankInfo}`;
+
+  output.appendChild(entry);
+  announce(`Diagnostic packet ${state.diagPacketCount} captured. ${bytes.length} bytes. Crank data: ${hasCrank ? 'present' : 'not found'}.`);
+}
+
+function clearDiag() {
+  document.getElementById('diag-output').innerHTML = '';
+  document.getElementById('diag-panel').style.display = 'none';
+  state.diagPacketCount = 0;
 }
 
 /* ═══════════════════════════════════════════════════════
